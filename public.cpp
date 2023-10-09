@@ -36,7 +36,7 @@ std::string getexepath()
 //create folder
 #ifdef _WIN32
     #include <direct.h>
-    #define mkdir(x,y) _mkdir(x)
+    #define mkdir(x) _mkdir(x)
     bool create_directory(const char* path)
     {
         int status = 0;
@@ -612,8 +612,9 @@ std::string gettimetext_millisecond(int millisecond)
 
     return result;
 }
-std::string gettimetext_framecount(int framecount, int fps)
+std::string gettimetext_framecount(int framecount, double dfps)
 {
+    int fps = (int)dfps;
     std::string result = "00:00:00";
     if (framecount <= 0 || fps <= 0)
         return result;

@@ -183,7 +183,7 @@ bool        gettimecount_interval(std::string timetext_start, std::string timete
 std::string gettime_custom();
 
 std::string gettimetext_millisecond(int millisecond);
-std::string gettimetext_framecount(int framecount, int fps);
+std::string gettimetext_framecount(int framecount, double dfps);
 
 std::string gettimeshow_second(long long second);
 std::string gettimeshow_day(long long second);

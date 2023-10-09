@@ -2587,7 +2587,7 @@ namespace digitalmysql
 		{
 			ret = false;
 			std::string error = mysql_error(&mysql);
-			_debug_to(loger_mysql, 1, ("[addmergetask]MySQL database connect failed: %s\n"), error.c_str());
+			_debug_to(loger_mysql, 1, ("[addtaskinfo]MySQL database connect failed: %s\n"), error.c_str());
 			return false;
 		}
 
@@ -2628,17 +2628,17 @@ namespace digitalmysql
 		}
 
 		//run sql
-		_debug_to(loger_mysql, 0, ("[addmergetask] sql: %s\n"), sql_buff);
+		_debug_to(loger_mysql, 0, ("[addtaskinfo] sql: %s\n"), sql_buff);
 		mysql_query(&mysql, "SET NAMES UTF8");		//support chinese text
 		if (!mysql_query(&mysql, sql_buff))			//success return 0,failed return random number
 		{
-			_debug_to(loger_mysql, 0, ("[addmergetask]task %d, %s success\n"), taskid, OPERATION.c_str());
+			_debug_to(loger_mysql, 0, ("[addtaskinfo]task %d, %s success\n"), taskid, OPERATION.c_str());
 		}
 		else 
 		{
 			ret = false;
 			std::string error = mysql_error(&mysql);
-			_debug_to(loger_mysql, 1, ("[addmergetask]task %d, %s failed: %s\n"), taskid, OPERATION.c_str(), error.c_str());
+			_debug_to(loger_mysql, 1, ("[addtaskinfo]task %d, %s failed: %s\n"), taskid, OPERATION.c_str(), error.c_str());
 		}
 		//=====================
 		mysql_close(&mysql);	//close connect

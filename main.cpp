@@ -39,7 +39,6 @@
 #include "httpConcurrencyServer.h"
 
 #pragma comment(lib,"ws2_32.lib")
-#pragma warning(disable:2362)		//忽略goto报错
 
 
 #define CHECK_REQUEST_STR(name,str,msg,result)  {if(str.empty()){msg=std::string(name)+" is error,please check request body";result&=false;}}
@@ -1610,7 +1609,6 @@ std::string getjson_error(int code, std::string errmsg, std::string data = "")
 //登录返回token
 std::string getjson_userlogin(authorizationinfo authorizationitem)
 {
-	bool result = true;
 	std::string errmsg = "success";
 	std::string result_str = "";
 
@@ -2512,7 +2510,7 @@ void delete_actortask_invalid()
 {
 	pthread_mutex_lock(&mutex_actortaskinfo);
 	ACTORTASKINFO_MAP::iterator itDeleteTask = Container_actortaskinfo.begin();
-	for (itDeleteTask;itDeleteTask != Container_actortaskinfo.end(); ++itDeleteTask)
+    for (itDeleteTask;itDeleteTask != Container_actortaskinfo.end(); ++itDeleteTask)
 	{
 		if (!digitalmysql::isexisttask_taskid(itDeleteTask->first))
 			Container_actortaskinfo.erase(itDeleteTask);
@@ -2813,8 +2811,8 @@ bool dispose_recvmsg_now(std::string recv_message, digitalmysql::taskinfo taskit
 		{
 			std::string data = ""; std::string keyvalue = "";
 			char buff[BUFF_SZ] = { 0 };
-			snprintf(buff, BUFF_SZ, "\"TaskGroupID\":\"%s\",\"TaskID\":%d,\"TaskName\":\"%s\",\"CreateTime\":\"%s\",", taskitem.groupid.c_str(), taskitem.taskid, taskitem.taskname.c_str(), taskitem.createtime.c_str()); keyvalue = keyvalue;
-			data += buff;
+            snprintf(buff, BUFF_SZ, "\"TaskGroupID\":\"%s\",\"TaskID\":%d,\"TaskName\":\"%s\",\"CreateTime\":\"%s\",", taskitem.groupid.c_str(), taskitem.taskid, taskitem.taskname.c_str(), taskitem.createtime.c_str()); keyvalue = buff;
+			data += keyvalue;
 
 			std::string audio_duration = gettimetext_millisecond(taskitem.audio_length);
 			snprintf(buff, BUFF_SZ, "\"Audio\":{\"AudioFormat\":\"%s\",\"AudioFile\":\"%s\",\"Duration\":\"%s\"},", taskitem.audio_format.c_str(), taskitem.audio_path.c_str(), audio_duration.c_str()); keyvalue = buff;
@@ -3550,7 +3548,6 @@ void global_http_generic_handler(struct evhttp_request* req, void* arg)
 	if (checkOptionsRequest(req)) return;
 	httpServer::httpThread* pServer = reinterpret_cast<httpServer::httpThread*>(arg);
 	if (pServer == nullptr) return;
-	int http_code = HTTP_OK;
 
 	//Authorization
 	std::string		   Authorization_token = "";
@@ -3666,7 +3663,6 @@ void global_http_generic_handler(struct evhttp_request* req, void* arg)
 
 		//解析路径中参数
 		size_t tempPos;
-		int overtime;
 		std::vector<std::string> queryVector;
 		globalSpliteString(queryStr, queryVector, ("&"));
 		std::map<std::string, std::string> queryMap;
@@ -3916,14 +3912,23 @@ void global_http_generic_handler(struct evhttp_request* req, void* arg)
 				//凌云-退出回调接口
 				bool checkrequest = true; std::string errmsg = "success"; std::string data = "";
 
-				std::string sobeycloud_user = "";
 				const char* user_value = evhttp_find_header(req->input_headers, "sobeycloud-user");
-				if (user_value)
-					sobeycloud_user = user_value;
-				std::string clear_sessionid = md5::getStringMD5(sobeycloud_user);//md5加密usercode得到sessionid
-				clearsessioninfo(clear_sessionid);//清除对应的会话
+                if (!user_value) checkrequest = false;
 
-				reply_item.content_string = getjson_error(0, errmsg);
+                if (checkrequest)
+                {
+                    std::string sobeycloud_user = "";
+                    sobeycloud_user = user_value;
+                    std::string clear_sessionid = md5::getStringMD5(sobeycloud_user);//md5加密usercode得到sessionid
+                    clearsessioninfo(clear_sessionid);//清除对应的会话
+                    reply_item.content_string = getjson_error(0, errmsg);
+                }
+                else
+                {
+                    errmsg = "not found sobeycloud-user at requset header...";
+                    reply_item.content_string = getjson_error(1, errmsg);
+                    debug_ret = false;
+                }
 			}
 		}
 		
@@ -3945,8 +3950,6 @@ void global_http_generic_handler(struct evhttp_request* req, void* arg)
 					LoginType = mapBodyIntParameter["LoginType"];
 				CHECK_REQUEST_NUM("LoginType", LoginType, errmsg, checkrequest);
 
-
-				int			UserId = -1;
 				std::string UserName = "";
 				std::string PassWord = "";
 				std::string Refresh_Token = "";
@@ -4224,16 +4227,12 @@ void global_http_generic_handler(struct evhttp_request* req, void* arg)
 				double Front_left = 0.0, Front_right = 1.0, Front_top = 0.0, Front_bottom = 1.0;
 				if (mapBodyDoubleParameter.find("left") != mapBodyDoubleParameter.end())
 					Front_left = mapBodyDoubleParameter["left"];
-				Front_left = (Front_left < 0.0) ? (0.0) : (Front_left);
 				if (mapBodyDoubleParameter.find("right") != mapBodyDoubleParameter.end())
 					Front_right = mapBodyDoubleParameter["right"];
-				Front_right = (Front_right < 0.0) ? (0.0) : (Front_right);
 				if (mapBodyDoubleParameter.find("top") != mapBodyDoubleParameter.end())
 					Front_top = mapBodyDoubleParameter["top"];
-				Front_top = (Front_top < 0.0) ? (0.0) : (Front_top);
 				if (mapBodyDoubleParameter.find("bottom") != mapBodyDoubleParameter.end())
 					Front_bottom = mapBodyDoubleParameter["bottom"];
-				Front_bottom = (Front_bottom < 0.0) ? (0.0) : (Front_bottom);
 				//
 				std::string Foreground = "", Background = "";
 				if (mapBodyStrParameter.find("Foreground") != mapBodyStrParameter.end())
@@ -4441,16 +4440,12 @@ void global_http_generic_handler(struct evhttp_request* req, void* arg)
 				double Front_left = 0.0, Front_right = 1.0, Front_top = 0.0, Front_bottom = 1.0;
 				if (mapBodyDoubleParameter.find("left") != mapBodyDoubleParameter.end())
 					Front_left = mapBodyDoubleParameter["left"];
-				Front_left = (Front_left < 0.0) ? (0.0) : (Front_left);
 				if (mapBodyDoubleParameter.find("right") != mapBodyDoubleParameter.end())
 					Front_right = mapBodyDoubleParameter["right"];
-				Front_right = (Front_right < 0.0) ? (0.0) : (Front_right);
 				if (mapBodyDoubleParameter.find("top") != mapBodyDoubleParameter.end())
 					Front_top = mapBodyDoubleParameter["top"];
-				Front_top = (Front_top < 0.0) ? (0.0) : (Front_top);
 				if (mapBodyDoubleParameter.find("bottom") != mapBodyDoubleParameter.end())
 					Front_bottom = mapBodyDoubleParameter["bottom"];
-				Front_bottom = (Front_bottom < 0.0) ? (0.0) : (Front_bottom);
 				//
 				std::string Foreground = "", Background = "";
 				if (mapBodyStrParameter.find("Foreground") != mapBodyStrParameter.end())
@@ -5571,7 +5566,7 @@ void InitCMDWnd()
 	SetConsoleMode(hStdin, mode);
 
 	char cmd[64] = {0};
-	sprintf(cmd, "mode con cols=%d lines=%d", 160, 40);
+    sprintf_s(cmd, "mode con cols=%d lines=%d", 160, 40);
 	system(cmd);
 }
 
@@ -5590,7 +5585,7 @@ int main()
 	SetUnhandledExceptionFilter(ExceptionHandler);
 
 	//
-	InitCMDWnd();
+    InitCMDWnd();
 	std::string apppath = getexepath(); apppath = str_replace(apppath, std::string("\\"), std::string("/"));
 
 	bool loadconfig = true;
@@ -5701,7 +5696,7 @@ start_wait:
 	{
 		char ch[256] = { 0 };
 		printf(("输入'Q'或‘q’退出程序:\n"));
-		gets_s(ch, 255);
+        gets_s(ch, 255);
 		std::string str; str = ch;
 		if (str.compare("Q") == 0 || str.compare("q") == 0)
 		{
@@ -5709,6 +5704,7 @@ start_wait:
 			server.stop_http_server();
 			break;
 		}
+        sleep(10);
 	}
 
 	//释放互斥量
